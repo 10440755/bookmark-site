@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简炫酷导航</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 50px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            width: 200px;
+            text-align: center;
+            transition: 0.3s;
+            cursor: pointer;
+        }
+        .card:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>我的常用网站</h1>
+    <div class="container" id="siteList"></div>
+    
+    <script>
+        const sites = [
+            { name: "百度", url: "https://www.baidu.com" },
+            { name: "谷歌", url: "https://www.google.com" },
+            { name: "GitHub", url: "https://github.com" }
+        ];
+
+        const container = document.getElementById('siteList');
+        sites.forEach(site => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<h2>${site.name}</h2>`;
+            card.onclick = () => window.open(site.url, '_blank');
+            container.appendChild(card);
+        });
+    </script>
+</body>
+</html>
