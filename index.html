@@ -2,19 +2,23 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>图文粘贴转HTML工具</title>
   <style>
     body {
       font-family: '宋体', sans-serif;
       font-size: 14px;
-      padding: 20px;
+      padding: 10px;
+      margin: 0;
     }
     #editor {
       width: 100%;
-      height: 500px;
+      min-height: 300px;
+      max-height: 80vh;
       border: 1px solid #ccc;
       padding: 10px;
-      overflow: auto;
+      overflow-y: auto;
+      box-sizing: border-box;
       font-size: 14px;
     }
     button {
@@ -22,61 +26,101 @@
       padding: 5px 10px;
       font-size: 14px;
     }
+    input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      font-size: 14px;
+      margin: 10px 0;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
   <h2>图文粘贴转HTML工具</h2>
-  <div contenteditable="true" id="editor" onpaste="handlePaste(event)"></div>
+
+  <label for="filename">文件名：</label>
+  <input type="text" id="filename" placeholder="请输入文件名">
+
+  <div contenteditable="true" id="editor"></div>
   <br>
   <button onclick="saveAsHtml()">保存为HTML</button>
   <button onclick="clearEditor()">清除内容</button>
 
   <script>
-    function handlePaste(event) {
-      setTimeout(() => {
-        const editor = document.getElementById('editor');
-        // 统一字体大小为小四
-        editor.querySelectorAll('*').forEach(el => {
-          el.style.fontSize = '14px';
-        });
+    const editor = document.getElementById('editor');
+    const filenameInput = document.getElementById('filename');
 
-        // 清理段落间多余换行：每个段落之间最多1个空行
-        let html = editor.innerHTML;
-        html = html.replace(/(<div><br><\/div>\s*){2,}/g, '<div><br></div>');
-        editor.innerHTML = html;
-      }, 100);
-    }
+    // 监听editor内容变化并更新文件名
+    const observer = new MutationObserver(() => {
+      updateFilenameFromEditor();
+    });
 
-    function clearEditor() {
-      document.getElementById('editor').innerHTML = '';
-    }
+    observer.observe(editor, { childList: true, subtree: true, characterData: true });
 
-    function saveAsHtml() {
-      const editor = document.getElementById('editor');
-      let content = editor.innerHTML;
-      const div = document.createElement('div');
-      div.innerHTML = content;
+    // 更新文件名输入框内容
+    function updateFilenameFromEditor() {
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = editor.innerHTML;
 
       let title = '未命名';
 
-      const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT, null, false);
+      const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_ELEMENT, null, false);
       while (walker.nextNode()) {
         const node = walker.currentNode;
         const text = node.textContent.trim();
         if (text) {
           title = text.replace(/[^\w\u4e00-\u9fa5]+/g, '').slice(0, 50);
-          break;
+          break; // 只获取第一段有效文本
         }
       }
+
+      filenameInput.value = title;
+    }
+
+    // 处理粘贴内容
+    function handlePaste(event) {
+      setTimeout(() => {
+        // 统一字体大小
+        editor.querySelectorAll('*').forEach(el => {
+          el.style.fontSize = '14px';
+        });
+
+        // 清理多余的空段落，保证段落之间只有一行空换行
+        let html = editor.innerHTML;
+
+        // 替换多个连续的空行
+        html = html.replace(/(<div><br><\/div>\s*){2,}/g, '<div><br></div>'); // 只保留一个空行
+        html = html.replace(/(<br>\s*){2,}/g, '<br>'); // 保证<Br>标签不会多余
+
+        editor.innerHTML = html;
+      }, 100);
+    }
+
+    // 添加粘贴事件监听
+    editor.addEventListener('paste', handlePaste);
+
+    // 清除内容
+    function clearEditor() {
+      editor.innerHTML = '';
+      filenameInput.value = '';
+    }
+
+    // 保存为HTML
+    function saveAsHtml() {
+      const content = editor.innerHTML.trim();
+      let title = filenameInput.value.trim() || '未命名';
+
+      // 清理标题中的非法字符
+      title = title.replace(/[\\\/:*?"<>|]/g, ''); // 去除非法字符
 
       const htmlContent = `<!DOCTYPE html>
 <html lang="zh">
 <head>
-<meta charset="UTF-8">
-<title>${title}</title>
-<style>
-body { font-size: 14px; font-family: '宋体', sans-serif; }
-</style>
+  <meta charset="UTF-8">
+  <title>${title}</title>
+  <style>
+    body { font-size: 14px; font-family: '宋体', sans-serif; }
+  </style>
 </head>
 <body>
 ${content}
