@@ -1,57 +1,94 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极简炫酷导航</title>
-    <style>
-        body {
-            background: #000;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        .container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 50px;
-        }
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 10px;
-            width: 200px;
-            text-align: center;
-            transition: 0.3s;
-            cursor: pointer;
-        }
-        .card:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: scale(1.1);
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>图文粘贴转HTML工具</title>
+  <style>
+    body {
+      font-family: '宋体', sans-serif;
+      font-size: 14px;
+      padding: 20px;
+    }
+    #editor {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #ccc;
+      padding: 10px;
+      overflow: auto;
+      font-size: 14px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-    <h1>我的常用网站</h1>
-    <div class="container" id="siteList"></div>
-    
-    <script>
-        const sites = [
-            { name: "百度", url: "https://www.baidu.com" },
-            { name: "谷歌", url: "https://www.google.com" },
-            { name: "GitHub", url: "https://github.com" }
-        ];
+  <h2>图文粘贴转HTML工具</h2>
+  <div contenteditable="true" id="editor" onpaste="handlePaste(event)"></div>
+  <br>
+  <button onclick="saveAsHtml()">保存为HTML</button>
+  <button onclick="clearEditor()">清除内容</button>
 
-        const container = document.getElementById('siteList');
-        sites.forEach(site => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `<h2>${site.name}</h2>`;
-            card.onclick = () => window.open(site.url, '_blank');
-            container.appendChild(card);
+  <script>
+    function handlePaste(event) {
+      setTimeout(() => {
+        const editor = document.getElementById('editor');
+        // 统一字体大小为小四
+        editor.querySelectorAll('*').forEach(el => {
+          el.style.fontSize = '14px';
         });
-    </script>
+
+        // 清理段落间多余换行：每个段落之间最多1个空行
+        let html = editor.innerHTML;
+        html = html.replace(/(<div><br><\/div>\s*){2,}/g, '<div><br></div>');
+        editor.innerHTML = html;
+      }, 100);
+    }
+
+    function clearEditor() {
+      document.getElementById('editor').innerHTML = '';
+    }
+
+    function saveAsHtml() {
+      const editor = document.getElementById('editor');
+      let content = editor.innerHTML;
+      const div = document.createElement('div');
+      div.innerHTML = content;
+
+      let title = '未命名';
+
+      const walker = document.createTreeWalker(div, NodeFilter.SHOW_ELEMENT, null, false);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const text = node.textContent.trim();
+        if (text) {
+          title = text.replace(/[^\w\u4e00-\u9fa5]+/g, '').slice(0, 50);
+          break;
+        }
+      }
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>${title}</title>
+<style>
+body { font-size: 14px; font-family: '宋体', sans-serif; }
+</style>
+</head>
+<body>
+${content}
+</body>
+</html>`;
+
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = title + '.html';
+      a.click();
+    }
+  </script>
 </body>
 </html>
