@@ -2,24 +2,30 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>图文粘贴转HTML工具</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       font-family: '宋体', sans-serif;
       font-size: 14px;
       padding: 10px;
       margin: 0;
+      width: 100%;
+      max-width: 100%;
     }
     #editor {
       width: 100%;
+      max-width: 100%;
       min-height: 300px;
       max-height: 80vh;
       border: 1px solid #ccc;
       padding: 10px;
       overflow-y: auto;
-      box-sizing: border-box;
       font-size: 14px;
+      background-color: #fff;
     }
     button {
       margin-right: 10px;
@@ -31,7 +37,6 @@
       padding: 5px;
       font-size: 14px;
       margin: 10px 0;
-      box-sizing: border-box;
     }
   </style>
 </head>
@@ -50,80 +55,85 @@
     const editor = document.getElementById('editor');
     const filenameInput = document.getElementById('filename');
 
-    // 监听editor内容变化并更新文件名
+    // 监听 editor 内容变化并更新文件名
     const observer = new MutationObserver(() => {
       updateFilenameFromEditor();
     });
-
     observer.observe(editor, { childList: true, subtree: true, characterData: true });
 
-    // 更新文件名输入框内容
     function updateFilenameFromEditor() {
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = editor.innerHTML;
-
       let title = '未命名';
-
       const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_ELEMENT, null, false);
       while (walker.nextNode()) {
         const node = walker.currentNode;
         const text = node.textContent.trim();
         if (text) {
           title = text.replace(/[^\w\u4e00-\u9fa5]+/g, '').slice(0, 50);
-          break; // 只获取第一段有效文本
+          break;
         }
       }
-
       filenameInput.value = title;
     }
 
     // 处理粘贴内容
     function handlePaste(event) {
       setTimeout(() => {
-        // 统一字体大小
         editor.querySelectorAll('*').forEach(el => {
           el.style.fontSize = '14px';
         });
-
-        // 清理多余的空段落，保证段落之间只有一行空换行
         let html = editor.innerHTML;
-
-        // 替换多个连续的空行
-        html = html.replace(/(<div><br><\/div>\s*){2,}/g, '<div><br></div>'); // 只保留一个空行
-        html = html.replace(/(<br>\s*){2,}/g, '<br>'); // 保证<Br>标签不会多余
-
+        html = html.replace(/(<div><br><\/div>\s*){2,}/g, '<div><br></div>');
+        html = html.replace(/(<br>\s*){2,}/g, '<br>');
         editor.innerHTML = html;
       }, 100);
     }
-
-    // 添加粘贴事件监听
     editor.addEventListener('paste', handlePaste);
 
-    // 清除内容
+    // 清除编辑器内容
     function clearEditor() {
       editor.innerHTML = '';
       filenameInput.value = '';
     }
 
-    // 保存为HTML
+    // 保存为HTML文件
     function saveAsHtml() {
       const content = editor.innerHTML.trim();
       let title = filenameInput.value.trim() || '未命名';
-
-      // 清理标题中的非法字符
-      title = title.replace(/[\\\/:*?"<>|]/g, ''); // 去除非法字符
-
+      title = title.replace(/[\\\/:*?"<>|]/g, '');
+      
+      // 保存的 HTML 页面中添加一个容器使内容居中，两边保留空白
       const htmlContent = `<!DOCTYPE html>
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>${title}</title>
   <style>
-    body { font-size: 14px; font-family: '宋体', sans-serif; }
+    * { box-sizing: border-box; }
+    body {
+      font-size: 14px;
+      font-family: '宋体', sans-serif;
+      margin: 0;
+      padding: 20px;
+      width: 100%;
+      background-color: #f9f9f9;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
-${content}
+  <div class="container">
+    ${content}
+  </div>
 </body>
 </html>`;
 
